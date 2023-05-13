@@ -140,10 +140,103 @@ describe('our first suite', () => {
                     .should('contain', 'Password')
             })
         })
+
     })
-    it.only('invoke command', () => {
+
+    it('invoke command', () => {
         cy.visit('/')
         cy.contains('Forms').click()
         cy.contains('Form Layouts').click()
+
+        // 1 .should
+        cy.get('[for="exampleInputEmail1"]').should('contain', 'Email address')
+
+        // 2 .then save the result of the first function as the input 'label' as a JQuery element then a JQuery method to get the text then use assertion for 'Email Address'
+        cy.get('[for="exampleInputEmail1"]').then ( label => {
+            expect(label.text()).to.equal('Email address')
+        })
+
+        // 3 .invoke is cypress version of #2
+        // used to get text from web page
+        cy.get('[for="exampleInputEmail1"]').invoke('text').then( text => {
+            expect(text).to.equal('Email address')
+        })
+        
+        // check if checkbox is clicked
+        cy.contains('nb-card', 'Basic form')
+            .find('nb-checkbox')
+            .click()
+            .find('.custom-checkbox')
+            // grabbing attribute values
+            .invoke('attr', 'class')
+            .should('contain', 'checked')
+            // JQuery method
+            // .then( classValue => {
+            //     expect(classValue).to.contain('checked')
+            // })
+    })
+
+    // invoke properties of web elements
+    it('assert property', () => {
+        cy.visit('/')
+        cy.contains('Forms').click()
+        cy.contains('Datepicker').click()
+
+        // click a date on calendar and assert the date is shown
+        cy.contains('nb-card', 'Common Datepicker')
+            .find('input')
+            .then( input => {
+                cy.wrap(input).click()
+                cy.get('nb-calendar-day-picker').contains('11').click()
+                // date is found under Properties -> value
+                cy.wrap(input).invoke('prop', 'value').should('contain', 'May 11, 2023')
+            })
+    })
+    
+    it('radio button', () => {
+        cy.visit('/')
+        cy.contains('Forms').click()
+        cy.contains('Form Layouts').click()
+
+        // check radio buttons
+        cy.contains('nb-card', 'Using the Grid')
+            .find('[type="radio"]')
+            .then( radioButtons => {
+                cy.wrap(radioButtons)
+                    // .first is same as eq(0) via index
+                    .first()
+                    // force cypress to click/check element even if hidden
+                    .check({force: true})
+                    .should('be.checked')
+                
+                    cy.wrap(radioButtons)
+                    // eq(1) is same as second()
+                    .eq(1)
+                    .check({force: true})
+
+                    cy.wrap(radioButtons)
+                    .first()
+                    // check 1st radio button is not checked after 2nd is checked
+                    .should('not.be.checked')
+
+                    cy.wrap(radioButtons)
+                    .eq(2)
+                    .should('be.disabled')
+            })
+    })
+
+    it.only('check boxes', () => {
+        cy.visit('/')
+        cy.contains('Modal & Overlays').click()
+        cy.contains('Toastr').click()
+
+        cy.get('[type="checkbox"]')
+            // if you want to uncheck an already checked box, have to use .click()
+            .check({force: true})
+        
+        cy.get('[type="checkbox"]')
+        // if you want to uncheck an already checked box, have to use .click()
+            .eq(0).click({force: true})
+            
     })
 })
