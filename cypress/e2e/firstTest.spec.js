@@ -241,7 +241,7 @@ describe('our first suite', () => {
     })
 
     // JS date object
-    it.only('assert property', () => {
+    it('assert property', () => {
 
         function selectDayFromCurrent(day){
             // Date object gets current current system's date/time
@@ -304,5 +304,101 @@ describe('our first suite', () => {
                 // assertion to verify if test output matches intended date to be selected
                 cy.wrap(input).invoke('prop', 'value').should('contain', dateAssert)
             })
+    })
+
+    it('lists and dropdowns', () => {
+        cy.visit('/')
+
+        // 1.
+        // cy.get('nav nb-select').click()
+        // cy.get('.options-list').contains('Dark').click()
+        // // verify the list contains Dark
+        // cy.get('nav nb-select').should('contain', 'Dark')
+        // // use css style to verify the color code #151a30 to rgb
+        // cy.get('nb-layout-header nav').should('have.css', 'background-color', 'rgb(34, 43, 69)')
+        
+        // 2. create a loop to verify each dropdown option
+        // if tag has 'select' ypu can use the cypress .select method
+        cy.get('nav nb-select').then (dropdown => {
+            cy.wrap(dropdown).click()
+            // get all options in the list using for .each method loop
+            // iterate through listItem 
+            cy.get('.options-list nb-option').each( (listItem, index) => {
+                // create a variable to store the text of each optiom
+                // .trim to remove space and keep just text
+                const itemText = listItem.text().trim()
+
+                // JSON object for color codes
+                const colors = {
+                    "Light": "rgb(255, 255, 255)",
+                    "Dark": "rgb(34, 43, 69)",
+                    "Cosmic": "rgb(50, 50, 89)",
+                    "Corporate": "rgb(255, 255, 255)",
+                }
+
+                // click on the option
+                cy.wrap(listItem).click()
+                // verify the input field contains the text selected
+                cy.wrap(dropdown).should('contain', itemText)
+                // remove hard code rgb colors and use JSON object to check each option's colors
+                cy.get('nb-layout-header nav').should('have.css', 'background-color', colors[itemText])
+                // logic so it doesnt click the dropdown menu after going throught the list
+                
+                if (index < 3){
+                    cy.wrap(dropdown).click()
+                }
+            })
+        })
+
+    })
+
+    it.only('web tables', () => {
+        cy.visit('/')
+        cy.contains('Tables & Data').click()
+        cy.contains('Smart Table').click()
+
+        // update Larry's age from 18 to 25
+        // use contains to find a certain table and role by the values in table
+        // then you can use tableRow to interact with th edifferent columns
+        cy.get('tbody').contains('tr', 'Larry').then( tableRow => {
+            cy.wrap(tableRow).find('.nb-edit').click()
+            cy.wrap(tableRow).find('[placeholder="Age"]').clear().type('25')
+            cy.wrap(tableRow).find('.nb-checkmark').click()
+            // use the index to access particular column
+            cy.wrap(tableRow).find('td').eq(6).should('contain', '25')
+        })
+
+        // add user john smith
+        cy.get('thead').find('.nb-plus').click()
+        cy.get('thead').find('tr').eq(2).then( tableRow => {
+            cy.wrap(tableRow).find('[placeholder="First Name"]').type('John')
+            cy.wrap(tableRow).find('[placeholder="Last Name"]').type('Smith')
+            cy.wrap(tableRow).find('.nb-checkmark').click()
+        })
+        // verify the user was added
+        cy.get('tbody tr').first().find('td').then( tableColumns => {
+            cy.wrap(tableColumns).eq(2).should('contain', 'John')
+            cy.wrap(tableColumns).eq(3).should('contain', 'Smith')
+        })
+
+        // filter by the ages
+        // array of ages to filter through
+        const age = [20, 30, 40, 200]
+
+        cy.wrap(age).each( age => {
+            cy.get('thead [placeholder="Age"]').clear().type(age)
+            // add a 0.5s delay for table to filter
+            cy.wait(500)
+            // use .each to iterate through rows/columns to a certain value
+            cy.get('tbody tr').each( tableRow => {
+                // logic to check that no data found
+                if(age == 200){
+                    cy.wrap(tableRow).should('contain', 'No data found')
+                } else{
+                    cy.wrap(tableRow).find('td').eq(6).should('contain', age)
+                }
+            })
+        })
+
     })
 })
