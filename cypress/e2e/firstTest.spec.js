@@ -225,7 +225,7 @@ describe('our first suite', () => {
             })
     })
 
-    it.only('check boxes', () => {
+    it('check boxes', () => {
         cy.visit('/')
         cy.contains('Modal & Overlays').click()
         cy.contains('Toastr').click()
@@ -238,5 +238,71 @@ describe('our first suite', () => {
         // if you want to uncheck an already checked box, have to use .click()
             .eq(0).click({force: true})
             
+    })
+
+    // JS date object
+    it.only('assert property', () => {
+
+        function selectDayFromCurrent(day){
+            // Date object gets current current system's date/time
+            let date = new Date()
+
+            // add # days to the date object and set date back into the date format, so you have to call the object again
+            date.setDate(date.getDate() + day)
+
+            // this is the day we want to select
+            let futureDay = date.getDate()
+
+            // the future month we want to select
+            // let futureMonth = date.getMonth()
+            // same as above but if month names are abbreviated
+            let futureMonth = date.toLocaleString('default', {month: 'short'})
+
+            // create variable to check if test output matches intended date to be selected
+            let dateAssert = futureMonth + ' ' + futureDay + ', ' + date.getFullYear()
+            cy.get('nb-calendar-navigation').invoke('attr', 'ng-reflect-date').then( dateAttribute => {
+                if (!dateAttribute.includes(futureMonth)){
+                    cy.get('[data-name="chevron-right]').click()
+                    // // use 2 locators (tag name and class) to ensure a grayed out date from other month is not selected
+                    // cy.get('nb-calendar-day-picker [class="day-cell ng-star-inserted"]').contains(futureDay).click()
+                    
+                    // use while loop bc its gonna call itself if that month doesnt have that # it will click next arrow to  satisfy # of days that added/subtracted from current date
+                    selectDayFromCurrent()
+                } else {
+                    // use 2 locators (tag name and class) to ensure a grayed out date from other month is not selected
+                    cy.get('nb-calendar-day-picker [class="day-cell ng-star-inserted"]').contains(futureDay).click()
+                }
+            })
+            return dateAssert
+        }
+        cy.visit('/')
+        cy.contains('Forms').click()
+        cy.contains('Datepicker').click()
+
+        
+
+        // click a date on calendar and assert the date is shown
+        cy.contains('nb-card', 'Common Datepicker')
+            .find('input')
+            .then( input => {
+                cy.wrap(input).click()
+
+                // cy.get('nb-calendar-navigation').invoke('attr', 'ng-reflect-date').then( dateAttribute => {
+                //     if (!dateAttribute.includes(futureMonth)){
+                //         cy.get('[data-name="chevron-right]').click()
+                //         // use 2 locators (tag name and class) to ensure a grayed out date from other month is not selected
+                //         cy.get('nb-calendar-day-picker [class="day-cell ng-star-inserted"]').contains(futureDay).click()
+                        
+                //     } else {
+                //         // use 2 locators (tag name and class) to ensure a grayed out date from other month is not selected
+                //         cy.get('nb-calendar-day-picker [class="day-cell ng-star-inserted"]').contains(futureDay).click()
+                //     }
+                // })
+                
+                // 10 is the parameter for # of days
+                let dateAssert = selectDayFromCurrent(10)
+                // assertion to verify if test output matches intended date to be selected
+                cy.wrap(input).invoke('prop', 'value').should('contain', dateAssert)
+            })
     })
 })
